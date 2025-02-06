@@ -82,9 +82,11 @@ def transform_sql_expression(calculation):
             if new_calculation == calculation:
                 break
             calculation = new_calculation
+        return calculation
+    
     calculation = replace_date_formats(calculation)
 
-    return calculation
+    
     # Replaces + with ||
     calculation = re.sub(
     r'(?<=\w|\)|"|\')\s*\+\s*(?=\w|\(|"|\')',

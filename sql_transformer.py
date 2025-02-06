@@ -120,8 +120,9 @@ def transform_sql_expression(calculation):
     # Replacing ISNULL with COALESCE for Snowflake
     calculation = re.sub(r"ISNULL\s*\(\s*([\w\"\.]+)\s*,\s*([^)]+)\s*\)", r"COALESCE(\1, \2)", calculation, flags=re.IGNORECASE)
 
-    double_quotes_pattern = r'(?i)(?<![=<>!])"([a-zA-Z_][a-zA-Z0-9_]*)"(?!\s*(=|<>|<|>|in|then))'
-    calculation = re.sub(double_quotes_pattern, lambda match: f'"{match.group(1).upper()}"', calculation)
+    #double_quotes_pattern = r'(?i)(?<![=<>!])"([a-zA-Z_][a-zA-Z0-9_]*)"(?!\s*(=|<>|<|>|in|then))'
+    #calculation = re.sub(double_quotes_pattern, lambda match: f'"{match.group(1).upper()}"', calculation)
+    
     # Handling CASE statement transformations separately
     if ("case" in calculation.lower() and "when" in calculation.lower()) or  "cast" in calculation.lower() or  "concat" in calculation.lower() or  "||" in calculation.lower() \
             or "coalesce" in calculation.lower() or ("select" in calculation.lower() and "from" in calculation.lower()):
@@ -131,12 +132,6 @@ def transform_sql_expression(calculation):
         #after_operators_pattern = r'([=<>]| in | then | else )\s*"([^"]+)"'
         after_operators_pattern = r'([=<>]| in )(?!\s*(then|else))\s*"([^"]+)"'
         calculation = re.sub(after_operators_pattern, lambda match: f"{match.group(1)} '{match.group(2)}'", calculation)
-
-        #then_pattern = r"(?i)(then |else )\"([^\"]+)\""
-        #calculation = re.sub(then_pattern, lambda match: f"{match.group(1)}'{match.group(2)}'", calculation)
-
-        double_quotes_pattern = r'(?i)(?<![=<>!])"([a-zA-Z_][a-zA-Z0-9_]*)"(?!\s*(=|<>|<|>|in|then))'
-        calculation = re.sub(double_quotes_pattern, lambda match: f'"{match.group(1).upper()}"', calculation)
 
     return calculation
 

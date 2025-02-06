@@ -52,18 +52,6 @@ def transform_sql_expression(calculation):
         '127': 'YYYY-MM-DDTHH:MI:SS.mmmZ'   
     }
     
-    calculation = re.sub(
-    r"(?i)\bconvert\s*\(\s*varchar\s*(?:\(\s*\d+\s*\))?\s*,\s*('[^']+'|[\w\"\.\-\s]+)\s*,\s*(\d+)\s*\)",
-    lambda m: f"TO_VARCHAR({m.group(1).strip()}, '{format_lookup.get(m.group(2), 'YYYY-MM-DD')}')",
-    calculation)
-
-    # Replaces current_timestamp
-    calculation = re.sub(
-        r"(?i)(CURRENT_TIMESTAMP)\s*([\+\-])\s*([\w\s]+)",
-        lambda m: f"DATEADD(DAY, {m.group(2).strip()}{m.group(3).strip()}, {m.group(1).strip()})",
-        calculation
-    )
-
     def replace_date_formats(calculation):
         def convert_replacement(match):
             date_or_datetime = match.group(1).lower()
@@ -85,6 +73,18 @@ def transform_sql_expression(calculation):
         return calculation
     
     calculation = replace_date_formats(calculation)
+    
+    calculation = re.sub(
+    r"(?i)\bconvert\s*\(\s*varchar\s*(?:\(\s*\d+\s*\))?\s*,\s*('[^']+'|[\w\"\.\-\s]+)\s*,\s*(\d+)\s*\)",
+    lambda m: f"TO_VARCHAR({m.group(1).strip()}, '{format_lookup.get(m.group(2), 'YYYY-MM-DD')}')",
+    calculation)
+
+    # Replaces current_timestamp
+    calculation = re.sub(
+        r"(?i)(CURRENT_TIMESTAMP)\s*([\+\-])\s*([\w\s]+)",
+        lambda m: f"DATEADD(DAY, {m.group(2).strip()}{m.group(3).strip()}, {m.group(1).strip()})",
+        calculation
+    )
 
     
     # Replaces + with ||

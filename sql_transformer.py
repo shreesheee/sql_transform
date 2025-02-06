@@ -53,10 +53,9 @@ def transform_sql_expression(calculation):
     }
     
     calculation = re.sub(
-        r"(?i)\bconvert\s*\(\s*varchar\s*(?:\(\s*\d+\s*\))?\s*,\s*([\w\"\.\-\s]+)\s*,\s*(\d+)\s*\)",
-        lambda m: f"TO_VARCHAR({m.group(1).strip()}, '{format_lookup.get(m.group(2), 'YYYY-MM-DD')}')",
-        calculation
-    )
+    r"(?i)\bconvert\s*\(\s*varchar\s*(?:\(\s*\d+\s*\))?\s*,\s*('[^']+'|[\w\"\.\-\s]+)\s*,\s*(\d+)\s*\)",
+    lambda m: f"TO_VARCHAR({m.group(1).strip()}, '{format_lookup.get(m.group(2), 'YYYY-MM-DD')}')",
+    calculation)
 
     # Replaces current_timestamp
     calculation = re.sub(
@@ -65,6 +64,27 @@ def transform_sql_expression(calculation):
         calculation
     )
 
+    def replace_date_formats(calculation):
+        def convert_replacement(match):
+            date_or_datetime = match.group(1).lower()
+            value = match.group(2).strip()
+            format_code = match.group(3)
+            format_str = format_lookup.get(format_code, 'YYYY-MM-DD HH24:MI:SS')
+            return f"{'TO_DATE' if date_or_datetime == 'date' else 'TO_TIMESTAMP'}({value}, '{format_str}')"
+
+        while True:
+            new_calculation = re.sub(
+                # Match the outermost convert function
+                r"(?i)\bconvert\s*\(\s*(date|datetime)\s*,\s*(.*?)\s*,\s*(\d+)\s*\)",
+                convert_replacement,
+                calculation
+            )
+            if new_calculation == calculation:
+                break
+            calculation = new_calculation
+    calculation = replace_date_formats(calculation)
+
+    return calculation
     # Replaces + with ||
     calculation = re.sub(
     r'(?<=\w|\)|"|\')\s*\+\s*(?=\w|\(|"|\')',
